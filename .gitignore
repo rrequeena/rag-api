@@ -9,3 +9,4 @@ venv/
 
 # Ignore data directory
 data/
+postgres-data/
