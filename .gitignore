@@ -1,0 +1,11 @@
+# Basic ignores for Python project cache and build files must be ignored in any folder
+__pycache__/
+*.pyc
+
+# Ignore the virtual environment stuff
+.venv/
+venv/
+.env
+
+# Ignore data directory
+data/
