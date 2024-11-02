@@ -2,16 +2,15 @@ import nltk
 from nltk.tokenize import sent_tokenize
 from openai import OpenAI
 from sqlalchemy.orm import Session
+from sqlalchemy import Column
 
 from utils.constants import OPENAI_CLIENT
 from database.models import FileChunks
 
-nltk.download('punkt')
-
 
 class TextProcessor:
     """ Process text and generate embeddings for the chunks """
-    def __init__(self, db: Session, file_id: int, chunk_size: int = 2):
+    def __init__(self, db: Session, file_id: Column[int], chunk_size: int = 2):
         self.db = db
         self.file_id = file_id
         self.chunk_size = chunk_size

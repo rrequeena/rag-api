@@ -1,11 +1,19 @@
 from fastapi import FastAPI, Depends
+from loguru import logger
+import nltk
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database.db import engine, get_db, Base
 from database.models import Files
-from routers import upload_file_router, ask_question_router, similar_chunks_router
+from routers import (
+    upload_file_router,
+    ask_question_router,
+    similar_chunks_router,
+    delete_document_router,
+)
+
 
 app = FastAPI(
     title="RAG API using OpenAI Models.",
@@ -13,9 +21,8 @@ app = FastAPI(
     version="0.1",
 )
 
-Base.metadata.create_all(bind=engine)
 
-@app.get('/')
+@app.get("/")
 async def root(db: Session = Depends(get_db)) -> list:
     """
     Get all the files in the database
@@ -25,12 +32,21 @@ async def root(db: Session = Depends(get_db)) -> list:
     """
     files_query = select(Files)
     files = db.scalars(files_query).all()
-    files_lst = [
-        {"file_id": file.id, "file_name": file.file_name}
-        for file in files
-    ]
+    files_lst = [{"file_id": file.id, "file_name": file.file_name} for file in files]
     return files_lst
+
 
 app.include_router(upload_file_router)
 app.include_router(ask_question_router)
 app.include_router(similar_chunks_router)
+app.include_router(delete_document_router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Function to run on startup
+    """
+    logger.debug("Starting up the API")
+    nltk.download("punkt_tab")
+    Base.metadata.create_all(bind=engine)

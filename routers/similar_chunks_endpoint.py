@@ -1,4 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from database.db import get_db
+from schemas.basic import QuestionRequest
+from utils.get_similar_chunks import get_similar_chunks
 
 router = APIRouter()
 
@@ -19,4 +24,4 @@ async def find_similar_chunks_endpoint(
         return formatted_response
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

@@ -1,4 +1,14 @@
-from fastapi import APIRouter
+import io
+import os
+import shutil
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from utils.constants import FOLDER
+from utils.background_tasks import TextProcessor
+from utils.file_parser import FileParser
+from database.db import get_db
+from database.models import Files
 
 router = APIRouter()
 
@@ -13,7 +23,7 @@ async def upload_file(
         exts = ", ".join(allowed_ext)
         raise HTTPException(
             status_code=400,
-            detail=f"File type not allowed. Use only: {exts}"  
+            detail=f"File type not allowed. Use only: {exts}" 
         )
     os.makedirs(FOLDER, exist_ok=True)
 
@@ -25,11 +35,13 @@ async def upload_file(
             shutil.copyfileobj(file_like_object, f)
 
         content_parser = FileParser(file_path)
-        file_text_content = content_parser.parse()
+        file_text_content = content_parser.parse().replace("\x00", "")
         new_file = Files(file_name=file.filename,
                         file_content=file_text_content)
         db.add(new_file)
         db.commit()
+        from loguru import logger
+        logger.debug(f"Running background task")
         db.refresh(new_file)
 
         # Process the file in a background job
@@ -47,4 +59,4 @@ async def upload_file(
         raise HTTPException(
             status_code=500,
             detail=f"Something went wrong while saving the file: {e}"
-        )
+        ) from e
